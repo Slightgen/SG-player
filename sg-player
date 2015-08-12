@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from subprocess import Popen, PIPE, STDOUT
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+import sys
+import os
+import signal
+
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
+
+class Ui_Form(QtGui.QWidget):
+    def __init__(self , arg=None):
+        QtGui.QWidget.__init__(self)
+        self.currectVideo = arg
+        self.video_Start =True
+        self.setupUi(self)
+        print self.setGeometry(250,700,500,85)
+        self.startPlayer()
+
+    def setupUi(self, Form):
+        Form.setObjectName(_fromUtf8("Form"))
+        Form.resize(534, 83)
+        self.pushButton = QtGui.QPushButton(Form)
+        self.pushButton.setGeometry(QtCore.QRect(140, 20, 51, 27))
+        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.pushButton_2 = QtGui.QPushButton(Form)
+        self.pushButton_2.setGeometry(QtCore.QRect(310, 20, 51, 27))
+        self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
+        self.pushButton_3 = QtGui.QPushButton(Form)
+        self.pushButton_3.setGeometry(QtCore.QRect(220, 20, 71, 27))
+        self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
+        self.pushButton_4 = QtGui.QPushButton(Form)
+        self.pushButton_4.setGeometry(QtCore.QRect(0, 20, 98, 27))
+        self.pushButton_4.setObjectName(_fromUtf8("pushButton_4"))
+        self.pushButton_5 = QtGui.QPushButton(Form)
+        self.pushButton_5.setGeometry(QtCore.QRect(440, 10, 41, 21))
+        self.pushButton_5.setObjectName(_fromUtf8("pushButton_5"))
+        self.pushButton_6 = QtGui.QPushButton(Form)
+        self.pushButton_6.setGeometry(QtCore.QRect(440, 30, 41, 21))
+        self.pushButton_6.setObjectName(_fromUtf8("pushButton_6"))
+        self.label = QtGui.QLabel(Form)
+        self.label.setGeometry(QtCore.QRect(360, 20, 71, 17))
+        self.label.setObjectName(_fromUtf8("label"))
+        self.commandLinkButton = QtGui.QCommandLinkButton(Form)
+        self.commandLinkButton.setGeometry(QtCore.QRect(420, 50, 111, 31))
+        self.commandLinkButton.setObjectName(_fromUtf8("commandLinkButton"))
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        Form.setWindowTitle(_translate("Form", "S-Com-Player", None))
+        self.pushButton_4.setText(_translate("Form", "Play/Pause", None))
+        self.pushButton.setText(_translate("Form", "<<", None))
+        self.pushButton_3.setText(_translate("Form", "Stop", None))
+        self.pushButton_2.setText(_translate("Form", ">>", None))
+        self.pushButton_5.setText(_translate("Form", "+", None))
+        self.pushButton_6.setText(_translate("Form", "-", None))
+        self.label.setText(_translate("Form", "    Volume", None))
+        self.commandLinkButton.setText(_translate("Form", "About", None))
+        self.pushButton_3.clicked.connect(self.stop)
+        self.pushButton_4.clicked.connect(self.play)
+        self.pushButton_2.clicked.connect(self.seekForward)
+        self.pushButton.clicked.connect(self.seekBackword)
+        self.pushButton_5.clicked.connect(self.volInc)
+        self.pushButton_6.clicked.connect(self.volDec)
+        self.setTabOrder(self.pushButton_4 ,self.pushButton)
+        self.setTabOrder(self.pushButton ,self.pushButton_3)
+        self.setTabOrder(self.pushButton_3 ,self.pushButton_2)
+        self.setTabOrder(self.pushButton_2 ,self.pushButton_5)
+        self.setTabOrder(self.pushButton_5 ,self.pushButton_6)
+
+        
+
+    def keyPressEvent(self, event):
+        if type(event) == QtGui.QKeyEvent:
+            print "key pressed" , event.key()
+            if  event.key() == 16777220:
+                print "enter"
+                print self.pushButton_2.hitButton()
+        
+
+    def closeEvent(self, event):
+        if self.video_Start:
+            self.proc_omx.stdin.write('q')
+        
+
+
+    def startPlayer(self):
+        print self.currectVideo
+        if self.currectVideo:
+            self.proc_omx = Popen(['omxplayer',self.currectVideo], 
+                                  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        else:
+            print "started nothing"
+        #print "started"
+    
+
+    def stop(self):
+        if self.video_Start == True:
+            self.video_Start = False
+            self.proc_omx.stdin.write('q')
+        else:
+            self.video_Start =True
+            self.startPlayer()
+
+    def play(self):
+        self.proc_omx.stdin.write(' ')
+
+    def seekForward(self):
+        self.proc_omx.stdin.write('^[[C')
+
+    def seekBackword(self):
+        self.proc_omx.stdin.write('^[[D')
+
+    def volInc(self):
+        self.proc_omx.stdin.write('+')
+
+    def volDec(self):
+        self.proc_omx.stdin.write('-')
+
+
+if __name__ =='__main__':
+    app = QApplication(sys.argv)
+    if len(sys.argv) > 1:
+        uifrm = Ui_Form(sys.argv[1])
+    else:
+        uifrm = Ui_Form()
+    uifrm.show()
+    app.exec_()
+
